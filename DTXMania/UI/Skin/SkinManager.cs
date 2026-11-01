@@ -83,8 +83,22 @@ public class SkinManager
         }
     }
 
-    //null on the System skin, which is code-defined by design and never loads layout json
-    public string? LayoutPathFor(CStage.EStage stageId) => currentSkin?.LayoutPath(stageId);
+    //searches the active skin layout folder first; falls back to System/Layout/<stageId>.json if present
+    public string? LayoutPathFor(CStage.EStage stageId)
+    {
+        if (currentSkin?.LayoutPath(stageId) is { } skinPath && File.Exists(skinPath))
+        {
+            return skinPath;
+        }
+
+        string systemLayout = Path.Combine(SystemRoot, "Layout", $"{stageId}.json");
+        if (File.Exists(systemLayout))
+        {
+            return systemLayout;
+        }
+
+        return currentSkin?.LayoutPath(stageId);
+    }
 
     /// <summary>
     /// Builds a stage's UI tree from the active skin's layout json, or null if there is none (always so on
