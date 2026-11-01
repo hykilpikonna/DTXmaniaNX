@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using DTXMania.UI.Skin;
 using System.Numerics;
 using DTXMania.Core;
@@ -367,6 +367,7 @@ internal class CStageResult : CStage
 					}
 
 					ini.tExport(iniPath);
+					SaveMidiPlayback();
 				}
 				//---------------------
 				#endregion
@@ -534,8 +535,59 @@ internal class CStageResult : CStage
 			}
 		}
 	}
+
+	private void SaveMidiPlayback()
+	{
+		if (string.IsNullOrEmpty(CDTXMania.DTX?.strFileNameFullPath))
+		{
+			return;
+		}
+
+		bool midiUsed = false;
+
+		for (int inst = 0; inst < 3; inst++)
+		{
+			if (!bAuto[inst] && stPerformanceEntry[inst].bMIDIUsed)
+			{
+				midiUsed = true;
+				break;
+			}
+		}
+
+		// Only store when MIDI input was used and events were recorded
+		if (!midiUsed || !MidiPlaybackRecorder.HasEvents)
+		{
+			return;
+		}
+
+		string defaultPath = CDTXMania.DTX.strFileNameFullPath + ".mid";
+		string midiPath = defaultPath;
+
+		if (File.Exists(midiPath))
+		{
+			string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+			midiPath = $"{CDTXMania.DTX.strFileNameFullPath}.{timestamp}.mid";
+			int counter = 1;
+			while (File.Exists(midiPath))
+			{
+				midiPath = $"{CDTXMania.DTX.strFileNameFullPath}.{timestamp}_{counter}.mid";
+				counter++;
+			}
+		}
+		try
+		{
+			MidiPlaybackRecorder.SaveToFile(midiPath);
+			Trace.TraceInformation($"MIDI playback saved to: {midiPath}");
+		}
+		catch (Exception ex)
+		{
+			Trace.TraceError($"Failed to save MIDI playback to {midiPath}: {ex.Message}");
+		}
+	}
+
 	public override void OnDeactivate()
 	{
+		MidiPlaybackRecorder.Clear();
 		base.OnDeactivate();
 	}
 	public override void OnManagedCreateResources()
