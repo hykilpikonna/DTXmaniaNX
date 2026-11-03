@@ -287,6 +287,8 @@ internal abstract class CStagePerfCommonScreen : CStage
         guitars[0] = IsPlayed(EInstrumentPart.GUITAR) ? new GuitarPerformance(EInstrument.Guitar1, EChartPart.Guitar, GuitarData, timeline, bIsAutoPlay) : null;
         guitars[1] = IsPlayed(EInstrumentPart.BASS) ? new GuitarPerformance(EInstrument.Guitar2, EChartPart.Bass, BassData, timeline, bIsAutoPlay) : null;
 
+        MidiPlaybackRecorder.Start();
+
 
         //let the loading sound gracefully fade out
         CDTXMania.Skin.tRemoveMixerAll(CDTXMania.Skin.soundNowLoading);
@@ -332,6 +334,7 @@ internal abstract class CStagePerfCommonScreen : CStage
     }
     public override void OnDeactivate()
     {
+        MidiPlaybackRecorder.Stop();
         // Restore the previous GC latency mode so menus and results can reclaim
         // memory freely again.
         System.Runtime.GCSettings.LatencyMode = _previousGcLatencyMode;
@@ -528,6 +531,7 @@ internal abstract class CStagePerfCommonScreen : CStage
             tHandleInput_Drums();
             tHandleInput_GuitarBass(EInstrumentPart.GUITAR);
             tHandleInput_GuitarBass(EInstrumentPart.BASS);
+            MidiPlaybackRecorder.Record(CDTXMania.InputManager, AudioMixer.Timer.nResetAtMs);
         }
 
         HandleArrowKeys(keyboard);
