@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Text;
 using DTXMania.Core.Audio;
 using FDK;
@@ -309,6 +309,21 @@ internal class CSkin : IDisposable
 
 		if (string.IsNullOrEmpty(strBoxDefSkinSubfolderFullName) || !bUseBoxDefSkin )
 		{
+			if (CDTXMania.SkinManager?.currentSkin is { } currentSkin)
+			{
+				string skinPath = System.IO.Path.Combine( currentSkin.basePath, "Resources", strファイルの相対パス );
+				if ( File.Exists( skinPath ) ) return skinPath;
+
+				skinPath = System.IO.Path.Combine( currentSkin.basePath, strファイルの相対パス );
+				if ( File.Exists( skinPath ) ) return skinPath;
+
+				if ( strファイルの相対パス.StartsWith( "Sounds" + System.IO.Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase ) )
+				{
+					skinPath = System.IO.Path.Combine( currentSkin.basePath, "Sounds", strファイルの相対パス.Substring( 7 ) );
+					if ( File.Exists( skinPath ) ) return skinPath;
+				}
+			}
+
 			return System.IO.Path.Combine( strSystemSkinSubfolderFullName, strファイルの相対パス );
 		}
 		else
