@@ -36,19 +36,70 @@ public struct SkinResource
             return string.Empty;
         }
 
-        if (source == ResourceSource.System)
+        string normPath = DataPath.Normalize(path);
+
+        if (CDTXMania.SkinManager?.currentSkin is { } skin)
         {
-            //fonts are the one thing the built-in skin does not hold: a system font is one of the game's
-            //own Fonts folders or one Windows already has, so it is looked up rather than composed
-            return type == ResourceType.Font ? UIFonts.GetSystemFont(path) : SkinManager.SystemPath(path);
+            // 1. Check in skin's dedicated resource folder for this type
+            string typeFolder = SkinDescriptor.GetResourceFolder(type);
+            string candidate = Path.Combine(skin.basePath, typeFolder, normPath);
+            if (File.Exists(candidate))
+            {
+                return candidate;
+            }
+
+            // 2. If it's an Image, check skin.basePath/Resources/normPath
+            if (type == ResourceType.Image)
+            {
+                candidate = Path.Combine(skin.basePath, "Resources", normPath);
+                if (File.Exists(candidate))
+                {
+                    return candidate;
+                }
+            }
+
+            // 3. If it's a Sound and normPath starts with Sounds\, check skin.basePath/Sounds/fileName
+            if (type == ResourceType.Sound && normPath.StartsWith("Sounds" + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+            {
+                candidate = Path.Combine(skin.basePath, "Sounds", normPath.Substring(7));
+                if (File.Exists(candidate))
+                {
+                    return candidate;
+                }
+            }
+
+            // 4. If it's a Video, also check skin.basePath/Videos/fileName
+            if (type == ResourceType.Video)
+            {
+                candidate = Path.Combine(skin.basePath, "Videos", Path.GetFileName(normPath));
+                if (File.Exists(candidate))
+                {
+                    return candidate;
+                }
+            }
+
+            // If source is explicitly Skin and not found in skin, fallback to System if available
+            if (source == ResourceSource.Skin)
+            {
+                string sysFallback = SkinManager.SystemPath(normPath);
+                if (File.Exists(sysFallback))
+                {
+                    return sysFallback;
+                }
+            }
         }
 
-        if (CDTXMania.SkinManager.currentSkin is not { } skin)
+        if (source == ResourceSource.Skin && CDTXMania.SkinManager?.currentSkin == null)
         {
+            string sysFallback = SkinManager.SystemPath(normPath);
+            if (File.Exists(sysFallback))
+            {
+                return sysFallback;
+            }
             return string.Empty;
         }
 
-        return Path.Combine(skin.basePath, SkinDescriptor.GetResourceFolder(type), DataPath.Normalize(path));
+        return type == ResourceType.Font ? UIFonts.GetSystemFont(path) : SkinManager.SystemPath(path);
     }
 
     public bool Exists(ResourceType type) => Resolve(type) is { Length: > 0 } full && File.Exists(full);

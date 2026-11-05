@@ -217,6 +217,9 @@ public class SkinManager
         //so a reload picks up edited component files, and re-seeds deleted ones
         UIGroup.ClearComponentCache();
 
-        CDTXMania.StageManager.rCurrentStage.LoadUI();
+        CDTXMania.Skin?.PrepareReloadSkin();
+        CDTXMania.Skin?.ReloadSkin();
+
+        CDTXMania.StageManager?.rCurrentStage?.LoadUI();
     }
 }
